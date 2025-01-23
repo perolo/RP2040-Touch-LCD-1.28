@@ -15,15 +15,20 @@ use {defmt_rtt as _, panic_probe as _};
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
-    let mut led = Output::new(p.PIN_25, Level::Low);
+    //let pins = p.pins;
+//    let mut led = Output::new(p.PIN_25, Level::Low);
+//    let backlight = pins.gpio2;
+    let mut backlight = Output::new(p.PIN_25, Level::Low);
 
     loop {
         info!("led on!");
-        led.set_high();
+        backlight.set_high();
+        //led.set_high();
         Timer::after_secs(1).await;
 
         info!("led off!");
-        led.set_low();
+        backlight.set_low();
+        //led.set_low();
         Timer::after_secs(1).await;
     }
 }
