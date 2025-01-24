@@ -85,7 +85,7 @@ async fn main(_spawner: Spawner) {
        .unwrap();           //TODO unwrap
     display.clear(Rgb565::BLACK).unwrap(); //TODO Rgb correct? + unwrap
 
-   let raw_image_data = ImageRawLE::new(include_bytes!("../../ferris.raw"), 86); //TODO check data + size
+   let raw_image_data = ImageRawLE::new(include_bytes!("../../assets/ferris.raw"), 86); //TODO check data + size
    //let ferris = Image::new(&raw_image_data, Point::new(34, 68));
    let ferris = Image::new(&raw_image_data, Point::new(80, 80));
 
