@@ -928,9 +928,7 @@ name = "pero-lcd"
 version = "0.1.0"
 dependencies = [
  "cortex-m-rt",
- "defmt",
  "defmt-rtt",
- "display-interface",
  "display-interface-spi",
  "embassy-embedded-hal",
  "embassy-executor",
