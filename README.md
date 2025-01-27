@@ -14,19 +14,14 @@ Inspiration from :
 
 This is my personal learning journey to NixOs, Embedded Rust and Pico development, no guarantees what so ever
 
-## Features
-
-* Crate [`lvgl`](https://github.com/lvgl/lv_binding_rust)
-* Crate [`shared-bus`](https://github.com/Rahix/shared-bus)
-* Driver [`qmi8658`](https://github.com/IniterWorker/qmi8658) _accelerometer,pedometer,gyroscope_
-* Driver [`cst816s`](https://github.com/IniterWorker/cst816s) _touch screen_
-
 ## Getting Started
 
 ### Using Nix-shell
 ```bash
 nix-shell
 cargo build
+elf2uf2-rs target/thumbv6m-none-eabi/debug/main
+cp target/thumbv6m-none-eabi/debug/main.uf2 /run/media/pero/RPI-RP2/.
 ```
 
 ### Using Nix flake
@@ -74,6 +69,7 @@ additional terms or conditions.
 <img src="./assets/rustacean-flat-happy.png" width="200" alt="Ferris" align="center">
 
 * Backlight PWM
+* Simple external button PIN28
 
 ## Backlog
 * Add Better Nix support
@@ -90,3 +86,11 @@ additional terms or conditions.
 * Fix TODO:s in code
 * How to generate *.raw data from images
 * Rust support for vendoring
+* Threaded implementation
+
+## Other references
+
+* Crate [`lvgl`](https://github.com/lvgl/lv_binding_rust)
+* Crate [`shared-bus`](https://github.com/Rahix/shared-bus)
+* Driver [`qmi8658`](https://github.com/IniterWorker/qmi8658) _accelerometer,pedometer,gyroscope_
+* Driver [`cst816s`](https://github.com/IniterWorker/cst816s) _touch screen_

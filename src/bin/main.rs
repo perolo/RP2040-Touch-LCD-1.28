@@ -10,6 +10,8 @@ use core::cell::RefCell;
 use embassy_executor::Spawner;
 use embassy_rp::gpio;
 use embassy_rp::bind_interrupts;
+use embassy_rp::gpio::Input;
+use embassy_rp::gpio::Pull;
 use embassy_rp::peripherals::PIO0;
 use embassy_rp::pio::{InterruptHandler, Pio};
 use embassy_rp::pio_programs::pwm::{PioPwm, PioPwmProgram};
@@ -17,7 +19,7 @@ use embassy_rp::spi;
 use embassy_rp::spi::Spi;
 use embassy_sync::blocking_mutex::Mutex;
 use embassy_sync::blocking_mutex::raw::NoopRawMutex;
-use embassy_time::Timer;
+use embassy_time::{Delay,Timer,Duration as EmbassyDuration};
 use gpio::{Level, Output};
 use {defmt_rtt as _, panic_probe as _};
 use display_interface_spi::SPIInterface;
@@ -25,7 +27,6 @@ use embassy_embedded_hal::shared_bus::blocking::spi::SpiDeviceWithConfig;
 use mipidsi::models::GC9A01;
 use mipidsi::options::{Orientation, Rotation};
 use mipidsi::Builder;
-use embassy_time::Delay;
 use embedded_graphics::image::{Image, ImageRawLE};
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
@@ -35,6 +36,34 @@ const REFRESH_INTERVAL: u64 = 20000;
 bind_interrupts!(struct Irqs {
     PIO0_IRQ_0 => InterruptHandler<PIO0>;
 });
+
+
+pub struct Debouncer<'a> {
+    input: Input<'a>,
+    debounce: EmbassyDuration,
+}
+
+impl<'a> Debouncer<'a> {
+    pub fn new(input: Input<'a>, debounce: EmbassyDuration) -> Self {
+        Self { input, debounce }
+    }
+
+    pub async fn debounce(&mut self) -> Level {
+        loop {
+            let l1 = self.input.get_level();
+
+            self.input.wait_for_any_edge().await;
+
+            Timer::after(self.debounce).await;
+
+            let l2 = self.input.get_level();
+            if l1 != l2 {
+                break l2;
+            }
+        }
+    }
+}
+
 
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
@@ -80,10 +109,17 @@ async fn main(_spawner: Spawner) {
     let mut display = Builder::new(GC9A01, di)
        .display_size(240, 240)
        .reset_pin(rst)
+       //.color_order(ColorOrder::Bgr)
+       //.invert_colors(ColorInversion::Inverted)
        .orientation(Orientation::new().rotate(Rotation::Deg0))
        .init(&mut Delay)
        .unwrap();           //TODO unwrap
     display.clear(Rgb565::BLACK).unwrap(); //TODO Rgb correct? + unwrap
+
+
+    //let cst816s_int1 = pins.gpio5;
+    //let cst816s_reset = pins.gpio13;
+    let mut btn = Debouncer::new(Input::new(p.PIN_28, Pull::Up), EmbassyDuration::from_millis(20));
 
    let raw_image_data = ImageRawLE::new(include_bytes!("../../assets/ferris.raw"), 86); //TODO check data + size
    //let ferris = Image::new(&raw_image_data, Point::new(34, 68));
@@ -93,10 +129,17 @@ async fn main(_spawner: Spawner) {
    ferris.draw(&mut display).unwrap(); //TODO unwrap
    
 
-    let mut duration = 0;
+    let mut duration = 500;
+    let mut lev;
+    lcd_pwm_pio.write(Duration::from_micros(duration));
     loop {
-        duration = (duration + 1) % 1000;
-        lcd_pwm_pio.write(Duration::from_micros(duration));
-        Timer::after_millis(1).await;
+        
+        lev = btn.debounce().await;
+        if lev == Level::High {
+            duration = (duration + 99) % 1000;
+        }
+        lcd_pwm_pio.write(Duration::from_micros(duration));        
+        //Timer::after_millis(1).await;
+
     }
 }
